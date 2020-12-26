@@ -34,7 +34,6 @@ Follower
 - user_to_id FK User
 - created_at
 
-
 ---------------------
 ### Действия пользоваеля
 Action
@@ -94,3 +93,22 @@ ChatMessage
 - chat_id FK
 - user_id FK
 - created_at    
+
+
+## Методы:
+### Accounts app
+- Registration, Login, Change password
+- Get, Edit main profile settings (avatar, header, description, location, site)
+- Get, Edit account settings (all other profile data)
+
+- Follow/Unfollow user
+- Get all followers
+- Get who follows user
+
+
+### Tweets
+- Get feed
+- Get user's tweets for profile page
+- Get posts that the user liked
+- Get user's media
+- Get tweets where the user replied

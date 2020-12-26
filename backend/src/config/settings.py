@@ -18,16 +18,21 @@ INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
+    'django.contrib.sites',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
     'rest_framework',
     'rest_framework.authtoken',
+    'rest_auth',
+    'allauth',
     'django_filters',
     'debug_toolbar',
     'drf_yasg',
     'corsheaders',
+
+    'users',
 ]
 
 MIDDLEWARE = [
@@ -95,6 +100,38 @@ AUTH_PASSWORD_VALIDATORS = [
                 '.NumericPasswordValidator',
     },
 ]
+
+# djangorestframework
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ),
+}
+
+REST_USE_JWT = True
+
+AUTH_USER_MODEL = 'users.User'
+REST_AUTH_SERIALIZERS = {
+    'LOGIN_SERIALIZER': 'users.serializers.UserLoginSerializer',
+    'USER_DETAILS_SERIALIZER': 'users.serializers.UserDetailSerializer',
+}
+
+# allauth
+ACCOUNT_USER_MODEL_USERNAME_FIELD = 'username'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_USERNAME_REQUIRED = True
+ACCOUNT_AUTHENTICATION_METHOD = 'username'
+
+SITE_ID = 1
+
+# general
 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Europe/Moscow'
