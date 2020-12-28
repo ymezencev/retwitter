@@ -76,6 +76,8 @@ class UserPersonalInfoDetailSerializerTestCase(TestCase):
             'location': 'Test place location',
             'site': 'https://test-site.com'
         }
+        print(expected_data)
+        print(data)
         self.assertEqual(expected_data, data)
 
 

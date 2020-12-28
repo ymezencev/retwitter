@@ -21,6 +21,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
 
 class UserPersonalInfoDetailSerializer(serializers.ModelSerializer):
     """Персональная информация для отображения в профиле пользователя"""
+
     class Meta:
         model = User
         fields = ['id', 'username', 'name', 'avatar', 'header', 'description',

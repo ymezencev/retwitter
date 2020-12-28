@@ -29,6 +29,7 @@ USER_URL = reverse('rest_user_details')
 
 class UserAuthRegisterTestCase(APITestCase):
     """Тесты регистрации пользователя"""
+
     def setUp(self):
         self.client = Client()
 
@@ -37,9 +38,9 @@ class UserAuthRegisterTestCase(APITestCase):
         response = self.client.post(REGISTER_URL, REGISTER_DATA)
         self.assertEquals(status.HTTP_201_CREATED, response.status_code)
         self.assertEqual(REGISTER_DATA['username'],
-                         response.data['user']['username'])
+            response.data['user']['username'])
         self.assertEqual(REGISTER_DATA['email'],
-                         response.data['user']['email'])
+            response.data['user']['email'])
 
     def test_register_failure_not_unique_username(self):
         """Регистрация не успешна, username должно быть уникальным"""
@@ -92,6 +93,7 @@ class UserAuthRegisterTestCase(APITestCase):
 
 class UserAuthLoginTestCase(APITestCase):
     """Тесты авторизации пользователя"""
+
     def setUp(self):
         self.client = Client()
         self.client.post(REGISTER_URL, REGISTER_DATA)
@@ -101,7 +103,7 @@ class UserAuthLoginTestCase(APITestCase):
         response = self.client.post(LOGIN_URL, LOGIN_DATA)
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(LOGIN_DATA['username'],
-                         response.data['user']['username'])
+            response.data['user']['username'])
 
     def test_login_failure_incorrect_password(self):
         """Авторизация не успешна, неправильный пароль"""
@@ -168,7 +170,7 @@ class UserEditTestCase(APITestCase):
         fields_for_edit = {'username': 'new_test_user_username'}
         json_data = json.dumps(fields_for_edit)
         response = self.client.patch(USER_URL, json_data,
-                                     content_type='application/json')
+            content_type='application/json')
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.user_info['username'] = fields_for_edit['username']
         self.assertEqual(self.user_info, response.data)
@@ -182,7 +184,7 @@ class UserEditTestCase(APITestCase):
         fields_for_edit = {'username': 'new_test_user_username'}
         json_data = json.dumps(fields_for_edit)
         response = self.client.patch(USER_URL, json_data,
-                                     content_type='application/json')
+            content_type='application/json')
         self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
         self.assertTrue('Authentication credentials were not provided.' in
                         response.data['detail'])
@@ -193,7 +195,7 @@ class UserEditTestCase(APITestCase):
         fields_for_edit = {'username': '', 'name': '', 'email': ''}
         json_data = json.dumps(fields_for_edit)
         response = self.client.patch(USER_URL, json_data,
-                                     content_type='application/json')
+            content_type='application/json')
         self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
         self.assertTrue('This field may not be blank.' in
                         response.data['username'])
@@ -213,7 +215,7 @@ class UserEditTestCase(APITestCase):
         fields_for_edit = {'username': REGISTER_DATA['username']}
         json_data = json.dumps(fields_for_edit)
         response = self.client.patch(USER_URL, json_data,
-                                     content_type='application/json')
+            content_type='application/json')
         self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
         self.assertTrue('user with this username already exists.' in
                         response.data['username'])
@@ -229,7 +231,7 @@ class UserEditTestCase(APITestCase):
         fields_for_edit = {'email': REGISTER_DATA['email']}
         json_data = json.dumps(fields_for_edit)
         response = self.client.patch(USER_URL, json_data,
-                                     content_type='application/json')
+            content_type='application/json')
         self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
         self.assertTrue('user with this email already exists.' in
                         response.data['email'])
@@ -258,7 +260,7 @@ class UserPersonalInfoDetailTestCase(APITestCase):
             self.user, context=context).data
         self.client.post(LOGIN_URL, data=LOGIN_DATA)
         self.personal_info_url = reverse('user-info-detail',
-                                         args=(self.user.id,))
+            args=(self.user.id,))
 
     def test_get_success_personal_info_for_edit(self):
         """Успешное получение данных пользователя для редактирования"""
@@ -282,7 +284,7 @@ class UserPersonalInfoDetailTestCase(APITestCase):
         fields_for_edit = {'description': 'New test user description'}
         json_data = json.dumps(fields_for_edit)
         response = self.client.patch(self.personal_info_url, json_data,
-                                     content_type='application/json')
+            content_type='application/json')
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.personal_info['description'] = fields_for_edit['description']
         self.assertEqual(self.personal_info, response.data)
@@ -293,7 +295,7 @@ class UserPersonalInfoDetailTestCase(APITestCase):
                            'name': 'new_test_user_name'}
         json_data = json.dumps(fields_for_edit)
         response = self.client.patch(self.personal_info_url, json_data,
-                                     content_type='application/json')
+            content_type='application/json')
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(self.user.username, response.data['username'])
 
@@ -306,7 +308,7 @@ class UserPersonalInfoDetailTestCase(APITestCase):
         fields_for_edit = {'username': 'new_test_user_username'}
         json_data = json.dumps(fields_for_edit)
         response = self.client.patch(self.personal_info_url, json_data,
-                                     content_type='application/json')
+            content_type='application/json')
         self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
         self.assertTrue('Authentication credentials were not provided.' in
                         response.data['detail'])
@@ -316,7 +318,21 @@ class UserPersonalInfoDetailTestCase(APITestCase):
         fields_for_edit = {'email': 'new_test_user_email@gmail.com'}
         json_data = json.dumps(fields_for_edit)
         response = self.client.patch(self.personal_info_url, json_data,
-                                     content_type='application/json')
+            content_type='application/json')
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         user = User.objects.get(id=self.user.id)
         self.assertEquals(self.user.email, user.email)
+
+    def test_patch_failure_personal_info_try_edit_different_user(self):
+        """Обновлять данные пользователя может только владелец или админ"""
+        test_user2_data = REGISTER_DATA.copy()
+        test_user2_data['username'] = 'test_user2'
+        test_user2_data['email'] = 'test_useer2@gmail.com'
+        response = self.client.post(REGISTER_URL, test_user2_data)
+        self.assertEqual(status.HTTP_201_CREATED, response.status_code)
+
+        fields_for_edit = {'description': 'Try changing diff user description'}
+        json_data = json.dumps(fields_for_edit)
+        response = self.client.patch(self.personal_info_url, json_data,
+                                     content_type='application/json')
+        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
