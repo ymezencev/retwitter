@@ -7,6 +7,7 @@ from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase
 
+from users.models import Following
 from users.serializers import UserPersonalInfoDetailSerializer, \
     UserDetailSerializer
 
@@ -25,6 +26,20 @@ REGISTER_URL = reverse('rest_register')
 LOGIN_URL = reverse('rest_login')
 LOGOUT_URL = reverse('rest_logout')
 USER_URL = reverse('rest_user_details')
+
+
+def register_new_user(client, n=1):
+    """
+    Регистрируем нового пользователя через отправку запроса,
+    где n - номер тестового пользователя
+    """
+    test_user_n = {
+        'username': f'test_user{n}',
+        'email': f'test_user{n}@gmail.com',
+        'password1': 'StrongPassword123',
+        'password2': 'StrongPassword123'
+    }
+    return client.post(REGISTER_URL, test_user_n)
 
 
 class UserAuthRegisterTestCase(APITestCase):
@@ -335,3 +350,173 @@ class UserPersonalInfoDetailTestCase(APITestCase):
         response = self.client.patch(self.personal_info_url, json_data,
                                      content_type='application/json')
         self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+
+
+class UserFollowUnfollowTestCase(APITestCase):
+    """Тесты подписок пользователей"""
+
+    def setUp(self):
+        self.client = Client()
+        response1 = register_new_user(client=self.client, n=1)
+        response2 = register_new_user(client=self.client, n=2)
+        self.user1 = User.objects.get(id=response1.data['user']['id'])
+        self.user2 = User.objects.get(id=response2.data['user']['id'])
+
+        self.client.post(LOGIN_URL, data={'username': self.user2.username,
+                                          'password': 'StrongPassword123'})
+        self.follow_url = reverse('user-info-follow')
+        self.unfollow_url = reverse('user-info-unfollow')
+
+    def test_success_follow_user(self):
+        """Успешно подписываемся на пользователя"""
+        data = {"following_user_id": self.user1.id}
+        json_data = json.dumps(data)
+        response = self.client.post(self.follow_url, data=json_data,
+                                    content_type='application/json')
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual(data, response.data)
+        self.assertEqual(1, Following.objects.filter(
+            user_id=self.user2.id).count())
+
+    def test_success_unfollow_user(self):
+        """Успешно отписываемся от пользователя"""
+        follow_data = {"following_user_id": self.user1.id}
+        json_data = json.dumps(follow_data)
+        self.client.post(self.follow_url, data=json_data,
+                         content_type='application/json')
+        self.assertEqual(1, Following.objects.filter(
+            user_id=self.user2.id).count())
+
+        unfollow_data = {"unfollowing_user_id": self.user1.id}
+        json_data = json.dumps(unfollow_data)
+        response = self.client.post(self.unfollow_url, data=json_data,
+                                    content_type='application/json')
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual(unfollow_data, response.data)
+        self.assertEqual(0, Following.objects.filter(
+            user_id=self.user2.id).count())
+
+    def test_failure_follow_user_not_logged_in(self):
+        """Попытка подписаться не залогинившись"""
+        response = self.client.post(LOGOUT_URL)
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        data = {"following_user_id": self.user1.id}
+        json_data = json.dumps(data)
+        response = self.client.post(self.follow_url, data=json_data,
+                                    content_type='application/json')
+        self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
+
+    def test_failure_unfollow_user_not_logged_in(self):
+        """Попытка отписаться не залогинившись"""
+        response = self.client.post(LOGOUT_URL)
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        data = {"following_user_id": self.user1.id}
+        json_data = json.dumps(data)
+        response = self.client.post(self.unfollow_url, data=json_data,
+                                    content_type='application/json')
+        self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
+
+    def test_failure_follow_yourself(self):
+        """Попытка подписаться на самого себя"""
+        data = {"following_user_id": self.user2.id}
+        json_data = json.dumps(data)
+        response = self.client.post(self.follow_url, data=json_data,
+                                    content_type='application/json')
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual(data, response.data)
+        self.assertEqual(0, Following.objects.filter(
+            user_id=self.user2.id).count())
+
+    def test_failure_follow_user_twice(self):
+        """Попытка дважды подписаться на пользователя"""
+        data = {"following_user_id": self.user1.id}
+        json_data = json.dumps(data)
+        response = self.client.post(self.follow_url, data=json_data,
+                                    content_type='application/json')
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual(data, response.data)
+        self.assertEqual(1, Following.objects.filter(
+            user_id=self.user2.id).count())
+        response = self.client.post(self.follow_url, data=json_data,
+                                    content_type='application/json')
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual(data, response.data)
+        self.assertEqual(1, Following.objects.filter(
+            user_id=self.user2.id).count())
+
+    def test_follow_user_not_exists(self):
+        """Поаытка подписаться на несуществующего пользователя"""
+        data = {"following_user_id": 7777777}
+        json_data = json.dumps(data)
+        response = self.client.post(self.follow_url, data=json_data,
+                                    content_type='application/json')
+        self.assertEqual(status.HTTP_404_NOT_FOUND, response.status_code)
+        self.assertEqual(0, Following.objects.filter(
+            user_id=self.user2.id).count())
+
+    def test_unfollow_user_not_exists(self):
+        """Поаытка отписаться от несуществующего пользователя"""
+        data = {"unfollowing_user_id": 7777777}
+        json_data = json.dumps(data)
+        response = self.client.post(self.unfollow_url, data=json_data,
+                                    content_type='application/json')
+        self.assertEqual(status.HTTP_404_NOT_FOUND, response.status_code)
+        self.assertEqual(0, Following.objects.filter(
+            user_id=self.user2.id).count())
+
+
+class UserListFollowingFollowsTestCase(APITestCase):
+    """Список подписок и кто подписался"""
+
+    def setUp(self):
+        self.client = Client()
+        self.follow_url = reverse('user-info-follow')
+        self.unfollow_url = reverse('user-info-unfollow')
+
+        response = register_new_user(client=self.client, n=1)
+        self.user1 = User.objects.get(id=response.data['user']['id'])
+
+        self.user_list = []
+        for i in range(2, 5):
+            response = register_new_user(client=self.client, n=i)
+            self.user_list.append(response.data['user']['id'])
+            json_data = json.dumps({'following_user_id': self.user1.id})
+            self.client.post(self.follow_url, data=json_data,
+                             content_type='application/json')
+
+        self.client.post(LOGIN_URL, data={'username': self.user1.username,
+                                          'password': 'StrongPassword123'})
+        for val_id in self.user_list:
+            json_data = json.dumps({'following_user_id': val_id})
+            self.client.post(self.follow_url, data=json_data,
+                             content_type='application/json')
+
+    def test_success_get_list_followers(self):
+        """Получаем список подписчиков текущего пользователя"""
+        responce = self.client.get(reverse('user-info-followers',
+                                           args=(self.user1.id,)))
+        self.assertEqual(len(self.user_list), responce.data['count'])
+
+    def test_success_get_list_following(self):
+        """Получаем список на кого подписан текущий пользователь"""
+        responce = self.client.get(reverse('user-info-following',
+                                           args=(self.user1.id,)))
+        self.assertEqual(len(self.user_list), responce.data['count'])
+
+    def test_success_get_list_followers_other_user(self):
+        """Получаем список подписчиков другого пользователя"""
+        response = register_new_user(client=self.client, n=99999)
+        self.assertEqual(int(self.client.session['_auth_user_id']),
+                         response.data['user']['id'])
+        responce = self.client.get(reverse('user-info-following',
+                                           args=(self.user1.id,)))
+        self.assertEqual(len(self.user_list), responce.data['count'])
+
+    def test_success_get_list_following_other_user(self):
+        """Получаем список на кого подписан другого пользователь"""
+        response = register_new_user(client=self.client, n=999992)
+        self.assertEqual(int(self.client.session['_auth_user_id']),
+                         response.data['user']['id'])
+        responce = self.client.get(reverse('user-info-followers',
+                                           args=(self.user1.id,)))
+        self.assertEqual(len(self.user_list), responce.data['count'])

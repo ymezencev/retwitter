@@ -37,7 +37,7 @@ class FollowingView(viewsets.ViewSet, viewsets.GenericViewSet):
     @action(detail=True, methods=['get'], name='Get who user follows',
             serializer_class=UserFollowingListSerializer)
     def following(self, request, pk=None):
-        """Список на кого подписна пользователь"""
+        """Список на кого подписн пользователь"""
         queryset = Following.objects.filter(user_id=pk).\
             select_related('following_user')
         return queryset
@@ -46,7 +46,7 @@ class FollowingView(viewsets.ViewSet, viewsets.GenericViewSet):
     @action(detail=True, methods=['get'], name='Get who follows user',
             serializer_class=UserFollowersListSerializer)
     def followers(self, request, pk=None):
-        """Список кто подписан на пользоватлея"""
+        """Список кто подписан на пользователя"""
         queryset = Following.objects.filter(following_user_id=pk). \
             select_related('following_user')
         return queryset
