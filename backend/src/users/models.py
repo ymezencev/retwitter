@@ -1,10 +1,16 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models import F, Q
 from django_countries.data import COUNTRIES
+
+from config import settings
 
 
 class User(AbstractUser):
-    """Модель профиль пользователя. Расширение стандартной модели юзера"""
+    """
+    Модель профиль пользователя.
+    Расширение стандартной модели юзера.
+    """
     GENDER_CHOICES = (('male', 'Male'), ('female', 'Female'))
 
     username = models.CharField(max_length=30, unique=True)
@@ -43,3 +49,24 @@ class User(AbstractUser):
     def __str__(self):
         return f'@{self.username}'
 
+
+class Following(models.Model):
+    """
+    Модель для подписок пользователей друг на друга
+    """
+    user = models.ForeignKey(User, related_name='following',
+                             on_delete=models.CASCADE)
+    following_user = models.ForeignKey(User, related_name='followers',
+                                       on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'following_user'],
+                                    name='unique_followers'),
+            models.CheckConstraint(check=~Q(user_id=F('following_user_id')),
+                                   name='self_not_follow')
+        ]
+
+    def __str__(self):
+        return f'{self.user_id} follows {self.following_user_id}'
