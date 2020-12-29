@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 from users.serializers import UserPersonalInfoDetailSerializer, \
-    UserDetailSerializer, UserLoginSerializer
+    UserDetailSerializer, UserLoginSerializer, ShortUserInfoSerializer
 
 User = get_user_model()
 
@@ -47,8 +47,6 @@ class UserPersonalInfoDetailSerializerTestCase(TestCase):
             'location': None,
             'site': None
         }
-        print(expected_data)
-        print(data)
         self.assertEqual(expected_data, data)
 
     def test_personal_info_all_data(self):
@@ -75,6 +73,54 @@ class UserPersonalInfoDetailSerializerTestCase(TestCase):
             'description': 'Test user description',
             'location': 'Test place location',
             'site': 'https://test-site.com'
+        }
+        self.assertEqual(expected_data, data)
+
+
+class ShortUserInfoSerializerTestCase(TestCase):
+    """
+    Тест сериалайзера краткой информауии о пользователе
+    """
+
+    def test_short_user_info_filled_only_main_data(self):
+        """ Заполнена только основная информация"""
+        user_data = {
+            'username': 'test_user',
+            'name': 'test_user',
+            'email': 'test_user@gmail.com'
+        }
+        user = User.objects.create(**user_data)
+        data = ShortUserInfoSerializer(user).data
+        expected_data = {
+            'id': user.id,
+            'username': 'test_user',
+            'name': 'test_user',
+            'avatar': None,  # fix, should return default picture
+        }
+        print(expected_data)
+        print(data)
+        self.assertEqual(expected_data, data)
+
+    def test_short_user_info_all_data(self):
+        """Заполнены все данные"""
+        user_data = {
+            'username': 'test_user',
+            'name': 'test_user',
+            'email': 'test_user@gmail.com',
+            'avatar': '/uploads/avatar/test.jpg',
+            'header': '/uploads/header/test.jpg',
+            'description': 'Test user description',
+            'location': 'Test place location',
+            'site': 'https://test-site.com'
+        }
+
+        user = User.objects.create(**user_data)
+        data = ShortUserInfoSerializer(user).data
+        expected_data = {
+            'id': user.id,
+            'username': 'test_user',
+            'name': 'test_user',
+            'avatar': '/media/uploads/avatar/test.jpg',
         }
         print(expected_data)
         print(data)

@@ -5,6 +5,7 @@ from rest_framework.routers import SimpleRouter
 from users import views
 
 router = SimpleRouter()
+router.register(r'users', views.UsersListView, basename='user-info')
 router.register(r'user', views.UserPersonalInfoDetailView,
                 basename='user-info')
 router.register(r'user', views.FollowingView, basename='user-info')

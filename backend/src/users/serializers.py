@@ -33,6 +33,15 @@ class UserPersonalInfoDetailSerializer(serializers.ModelSerializer):
         read_only_fields = ['username', 'name']
 
 
+class ShortUserInfoSerializer(serializers.ModelSerializer):
+    """Краткая информауия о пользователе"""
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'name', 'avatar']
+        read_only_fields = ['id', 'username', 'name', 'avatar']
+
+
 class UserFollowingListSerializer(serializers.ModelSerializer):
     """На кого подписан пользователь"""
     following_user = UserPersonalInfoDetailSerializer(read_only=True)

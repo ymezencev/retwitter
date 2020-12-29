@@ -1,24 +1,30 @@
 from django.contrib.auth import get_user_model
 from django.db.models import F
-from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.generics import RetrieveUpdateAPIView
+from rest_framework.mixins import ListModelMixin
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
+from rest_framework.viewsets import ViewSet, GenericViewSet
 
 from core.decorators import paginate
 from users.models import Following
 from users.permissions import IsOwnerOrStaffOrReadOnly
 from users.serializers import UserPersonalInfoDetailSerializer, \
     UserFollowingListSerializer, UserFollowersListSerializer, \
-    FollowSerializer, UnfollowSerializer
-
+    FollowSerializer, UnfollowSerializer, ShortUserInfoSerializer
 
 User = get_user_model()
 
 
-class UserPersonalInfoDetailView(RetrieveUpdateAPIView,
-                                 viewsets.GenericViewSet):
+class UsersListView(ListModelMixin, GenericViewSet):
+    """Список пользователей с краткой информацией"""
+    queryset = User.objects.filter(is_active=True)
+    serializer_class = ShortUserInfoSerializer
+    pagination_class = PageNumberPagination
+
+
+class UserPersonalInfoDetailView(RetrieveUpdateAPIView, GenericViewSet):
     """Отображаем и редактируем информацию о профиле пользователя"""
     lookup_value_regex = '\d+'
     queryset = User.objects.filter(is_active=True).annotate(owner_id=F('id'))
@@ -26,7 +32,7 @@ class UserPersonalInfoDetailView(RetrieveUpdateAPIView,
     permission_classes = [IsOwnerOrStaffOrReadOnly]
 
 
-class FollowingView(viewsets.ViewSet, viewsets.GenericViewSet):
+class FollowingView(ViewSet, GenericViewSet):
     """
     Подписки пользователей друг на друга
     """
