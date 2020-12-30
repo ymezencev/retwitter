@@ -44,8 +44,10 @@ class FollowingView(ViewSet, GenericViewSet):
             serializer_class=UserFollowingListSerializer)
     def following(self, request, pk=None):
         """Список на кого подписн пользователь"""
-        queryset = Following.objects.filter(user_id=pk).\
-            select_related('following_user')
+        queryset = Following.objects.filter(user_id=pk).values(
+            'following_user_id', username=F('following_user__username'),
+            name=F('following_user__name'), avatar=F('following_user__avatar')
+        ).order_by('following_user__username')
         return queryset
 
     @paginate
@@ -53,8 +55,9 @@ class FollowingView(ViewSet, GenericViewSet):
             serializer_class=UserFollowersListSerializer)
     def followers(self, request, pk=None):
         """Список кто подписан на пользователя"""
-        queryset = Following.objects.filter(following_user_id=pk). \
-            select_related('following_user')
+        queryset = Following.objects.filter(following_user_id=pk).values(
+            'user_id', username=F('user__username'), name=F('user__name'),
+            avatar=F('user__avatar')).order_by('user__username')
         return queryset
 
     @action(detail=False, methods=['post'], name='Follow user',

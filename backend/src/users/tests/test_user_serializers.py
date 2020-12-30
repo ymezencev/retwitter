@@ -97,8 +97,6 @@ class ShortUserInfoSerializerTestCase(TestCase):
             'name': 'test_user',
             'avatar': None,  # fix, should return default picture
         }
-        print(expected_data)
-        print(data)
         self.assertEqual(expected_data, data)
 
     def test_short_user_info_all_data(self):
@@ -122,8 +120,6 @@ class ShortUserInfoSerializerTestCase(TestCase):
             'name': 'test_user',
             'avatar': '/media/uploads/avatar/test.jpg',
         }
-        print(expected_data)
-        print(data)
         self.assertEqual(expected_data, data)
 
 

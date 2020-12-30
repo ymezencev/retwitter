@@ -42,26 +42,14 @@ class ShortUserInfoSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'username', 'name', 'avatar']
 
 
-class UserFollowingListSerializer(serializers.ModelSerializer):
+class UserFollowingListSerializer(ShortUserInfoSerializer):
     """На кого подписан пользователь"""
-    following_user = UserPersonalInfoDetailSerializer(read_only=True)
-
-    class Meta:
-        model = Following
-        fields = ("following_user",
-                  "created_at")
-        read_only_fields = ('following_user', 'created_at')
+    id = serializers.IntegerField(source='following_user_id')
 
 
-class UserFollowersListSerializer(serializers.ModelSerializer):
+class UserFollowersListSerializer(ShortUserInfoSerializer):
     """Подписчики пользователя"""
-    user = UserPersonalInfoDetailSerializer(read_only=True)
-
-    class Meta:
-        model = Following
-        fields = ("user",
-                  "created_at")
-        read_only_fields = ('user', 'created_at')
+    id = serializers.IntegerField(source='user_id')
 
 
 class FollowSerializer(serializers.ModelSerializer):
